@@ -253,9 +253,15 @@ distance = sqrt((x2-x1)^2+(y2-y1)^2);
 
 if(b1 == b2 && abs(atand((x2-x1)/(y2-y1))-b1)< .05)% check if both points are on the same line
     line([x1,x2],[y1,y2])  % If so, just draw a line between them
-elseif abs(point2lhx - point1lhx)<.05*distance && abs(point2lhy - point1lhy)<.01*distance %% left hand circles have the same center %Check if both points are on the same circle
-    a1 = atand((y1 - point1lhy)/(x1 - point1lhx));
-    a2 = atand((y2 - point2lhy)/(x2 - point2lhx));
+
+%Next, check if both points are on the same circle. If so, just turn from
+%one to the other
+elseif abs(point2lhx - point1lhx)<.05*distance && abs(point2lhy - point1lhy)<.01*distance %% left hand circles have the same center 
+    a1 = atand((y1 - point1lhy)/(x1 - point1lhx)); %The angle (from the +x axis ccw) to the point on the circle where point 1 lies
+    a2 = atand((y2 - point2lhy)/(x2 - point2lhx)); %The angle (from the +x axis ccw) to the point on the circle where point 2 lies
+    
+    %because of the range of atand, sometimes the values returned for a1
+    %and a2 must be alterred.
     if x1 == point1lhx && y1 > point1lhy
         a1 = 90;
     elseif x1 > point1lhx && y1 == point1lhy
@@ -288,16 +294,18 @@ elseif abs(point2lhx - point1lhx)<.05*distance && abs(point2lhy - point1lhy)<.01
         a2 = 180 + a2;
     end    
     
-    if a1>a2
-        a1 = a1-360;
+    if a1>a2 %The DrawArc function draws an arc counterclockwise from angle 1 to angle 2 
+        a1 = a1-360; %In this case, to draw a lefthand circle
     end
     DrawArc(point1lhx, point1lhy, a1, a2, r)
     distance = (a2-a1)*r*pi/180;
     
 elseif abs(point2rhx - point1rhx)<.01*distance && abs(point2rhy - point1rhy)<.01*distance %% both right hand circles have the same center
-    a1 = atand((y1 - point1rhy)/(x1 - point1rhx));
-    a2 = atand((y2 - point2rhy)/(x2 - point2rhx));
+    a1 = atand((y1 - point1rhy)/(x1 - point1rhx)); %The angle (from the +x axis ccw) to the point on the circle where point 1 lies
+    a2 = atand((y2 - point2rhy)/(x2 - point2rhx)); %The angle (from the +x axis ccw) to the point on the circle where point 2 lies
     
+    %because of the range of atand, sometimes the values returned for a1
+    %and a2 must be alterred.
     if x1 == point1rhx && y1 > point1rhy
         a1 = 90;
     elseif x1 > point1rhx && y1 == point1rhy
@@ -331,68 +339,113 @@ elseif abs(point2rhx - point1rhx)<.01*distance && abs(point2rhy - point1rhy)<.01
     end    
     
     if a2>a1
-        a2 = a2-360;
+        a2 = a2-360; %This makes sure it draws a righthand circle
     end
     distance = (a1-a2)*r*pi/180;
     DrawArc(point1rhx, point1rhy, a1, a2, r)
   % END OF TURN LOGIC BASED ON BOTH POINTS BEING ON THE SAME CIRCLE
   
 elseif distance >( r * 2)
-    %convert bearings to angles from the +x axis
+    %convert bearings to ccw angles from the +x axis for easier mental
+    %calculations
     b1 = (90-b1);
     b2 = (90-b2);
     
-    dx = point2lhx - point1rhx;
-    dy =  point2lhy - point1rhy;
-    d = sqrt(dx^2+dy^2);
-    L = sqrt(d^2-(2*r)^2);
-    syms x
-    %y = double(solve(y^2*(-dx-L) + 4*r*y + L - dx == 0, y))
-    %alpha = 2*atan(y(2))*180/pi
-    y = real(double(solve(L*cos(x)+ 2*r*sin(x)-dx == 0))*180/pi);
-    alpha = y(1);
-
-    Lx = L*cosd(alpha);
-    Ly = L*sind(alpha);
+     %% Right hand turn, straight line, left hand turn
+%     dx = point2lhx - point1rhx; 
+%     dy =  point2lhy - point1rhy;
+%     d = sqrt(dx^2+dy^2);%The distance between point 1's right hand circle center, and point 2's left hand circle center
+%     
+%     L = sqrt(d^2-(2*r)^2); %The length of the tangent Line
+%     syms x
+%     y = real(double(solve(L*cos(x)+ 2*r*sin(x)-dx == 0))*180/pi);
+%     alpha = y(1);
+%     
+%     linex1 = point1rhx+ r*sind(alpha);
+%     linex2 = point2lhx- r*sind(alpha);
+%     liney1 = point1rhy+ r*cosd(alpha);
+%     liney2 = point2lhy- r*cosd(alpha);
+%     lineangle = atand((liney2-liney1)/(linex2-linex1)); %The angle of the line that connects the two arcs
+%     
+%     anglel2toc2 = (atand((point2lhy-liney2)/(point2lhx-linex2)) + 90-lineangle); % angle from point 2 of the line connecting the two arcs toward the center of point 2's lefthand circle.
+%                                                         
+%     if  (abs(anglel2toc2)>.01 && abs(anglel2toc2-180)> .01) |(linex2 == linex1 && liney2>liney1 | b1==-90)) && length(y) == 2 %If the angle of the line connecting the arcs isn't 90 degrees off from a line connecting the center of the second arc and the end of the line, the wrong tangent line was used
+%         altalpha = 1
+%         alpha = y(2);
+%         linex1 = point1rhx+ r*sind(alpha);
+%         linex2 = point2lhx- r*sind(alpha);
+%         liney1 = point1rhy+ r*cosd(alpha);
+%         liney2 = point2lhy- r*cosd(alpha);
+%     end
+%     
+%     theta = b1+alpha; %Angle of travel on point 1's circle
+%     phi = b2+alpha; %Angle of travel on point 2's circle
+%     arc1a1 =b1+90-theta; %Starting angle on arc 1
+%     arc1a2 =b1+90; %ending angle on arc 1
+%     
+%     if arc1a1 > arc1a2
+%         arc1a1 = arc1a1 - 360;
+%     end
+%     arc2a1 =b2-90-phi;
+%     arc2a2 =b2-90;
+%     if arc2a1 > arc2a2
+%         arc2a1 = arc2a1 - 360;
+%     end
+%     DrawArc(point1rhx, point1rhy, arc1a1, arc1a2, r)
+%     line([linex1,linex2], [liney1,liney2]) %connects the ends of the two arcs - this is your tangent line
+%     DrawArc(point2lhx, point2lhy, arc2a1, arc2a2, r)
+%     DrawArc(x1, y1, 0, 360,.5) %Draws circles around starting and ending points for visibility
+%     DrawArc(x2, y2, 0, 360,.5)
     
-    linex1 = point1rhx+ r*sind(alpha);
-    linex2 = point2lhx- r*sind(alpha);
-    liney1 = point1rhy+ r*cosd(alpha);
-    liney2 = point2lhy- r*cosd(alpha);
-    lineangle = atand((liney2-liney1)/(linex2-linex1))
+    %% Left hand turn, straight line, left hand turn
+%     clc
+%     dx = point2rhx - point1lhx; 
+%     dy =  point2rhy - point1lhy;
+%     d = sqrt(dx^2+dy^2);%The distance between point 1's right hand circle center, and point 2's left hand circle center
+%     
+%     L = sqrt(d^2-(2*r)^2); %The length of the tangent Line
+%     syms x
+%     y = real(double(solve(L*cos(x)+ 2*r*sin(x)-dx == 0))*180/pi);
+%     alpha = y(1);
+%    
+%     linex1 = point1lhx+ r*sind(alpha);
+%     linex2 = point2rhx- r*sind(alpha);
+%     liney1 = point1lhy- r*cosd(alpha);
+%     liney2 = point2rhy+ r*cosd(alpha);
+%     lineangle = atand((liney2-liney1)/(linex2-linex1)); %The angle of the line that connects the two arcs
+%     
+%     anglel2toc2 = (atand((point2rhy-liney2)/(point2rhx-linex2)) + 90-lineangle); % angle from point 2 of the line connecting the two arcs toward the center of point 2's lefthand circle.
+%    (linex2 == linex1 && (liney2<liney1 | b1==-90))
+%     if  (abs(anglel2toc2)>.01 && abs(anglel2toc2-180)> .01) | (linex2 == linex1 && (liney2<liney1 | b1==-90)) && length(y) == 2 %If the angle of the line connecting the arcs isn't 90 degrees off from a line connecting the center of the second arc and the end of the line, the wrong tangent line was used
+%         alpha = y(2);
+%         linex1 = point1lhx+ r*sind(alpha);
+%         linex2 = point2rhx- r*sind(alpha);
+%         liney1 = point1lhy- r*cosd(alpha);
+%         liney2 = point2rhy+ r*cosd(alpha);
+%     end
+%     
+%     
+%     arc1a1 =b1-90; %Starting angle on arc 1
+%     arc1a2 =alpha-90; %ending angle on arc 1
+%     
+%     if arc1a1 > arc1a2
+%         arc1a1 = arc1a1 - 360;
+%     end
+%     arc2a1 = 90+b2;
+%     arc2a2 =90+alpha;
+%     if arc2a1 > arc2a2
+%         arc2a1 = arc2a1 - 360;
+%     elseif arc2a2>360+arc2a1
+%         arc2a2 = arc2a2 - 360;
+%     end
+%     DrawArc(point1lhx, point1lhy, arc1a1, arc1a2, r)
+%     line([linex1,linex2], [liney1,liney2]) %connects the ends of the two arcs - this is your tangent line
+%     DrawArc(point2rhx, point2rhy, arc2a1, arc2a2+1, r)
+%     DrawArc(x1, y1, 0, 360,.5) %Draws circles around starting and ending points for visibility
+%     DrawArc(x2, y2, 0, 360,.5)
     
-    anglel2toc2 = (atand((point2lhy-liney2)/(point2lhx-linex2)) + 90-lineangle) % angle from point 2 of the line connecting the two arcs toward the center of point 2's lefthand circle.
-    
-    if  abs(anglel2toc2)>.01 && abs(anglel2toc2-180)> .01
-        altalpha = 1
-        alpha = y(2);
-        linex1 = point1rhx+ r*sind(alpha);
-        linex2 = point2lhx- r*sind(alpha);
-        liney1 = point1rhy+ r*cosd(alpha);
-        liney2 = point2lhy- r*cosd(alpha);
-        lineangle = atand((liney2-liney1)/(linex2-linex1));
-    end
     
     
-    theta = b1+alpha; %Angle of travel on point 1's circle
-    phi = b2+alpha;
-    arc1a1 =b1+90-theta;
-    arc1a2 =b1+90;
-    if arc1a1 > arc1a2
-        %changed1=1
-        arc1a1 = arc1a1 - 360;
-    end
-    arc2a1 =b2-90-phi;
-    arc2a2 =b2-90;
-    if arc2a1 > arc2a2
-        %changed2=1
-        arc2a1 = arc2a1 - 360;
-    end
-    DrawArc(point1rhx, point1rhy, arc1a1, arc1a2, r)
-     line([linex1,linex2], [liney1,liney2])
-     DrawArc(point2lhx, point2lhy, arc2a1, arc2a2, r)
-    DrawArc(x1, y1, 0, 360,.5)
-    DrawArc(x2, y2, 0, 360,.5)
 end
 
 function DrawArc (x, y, a1, a2, r)
