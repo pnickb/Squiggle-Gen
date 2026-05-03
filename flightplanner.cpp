@@ -5,6 +5,17 @@
 #include <fstream>
 #include <stdexcept>
 
+// Approximate radius of the Earth in metres (WGS-84 mean)
+static constexpr double EARTH_RADIUS_M = 6371000.0;
+
+// Standard gravity in m/s²
+static constexpr double GRAVITY_M_S2 = 9.8;
+
+// Tolerances used when deciding whether two turn-circle centres coincide.
+// The original MATLAB code used asymmetric values (.05 / .01); preserved here.
+static constexpr double TURN_CENTER_X_TOLERANCE = 0.05;
+static constexpr double TURN_CENTER_Y_TOLERANCE = 0.01;
+
 // ---------------------------------------------------------------------------
 // newPoint – spherical forward geodesy (mirrors MATLAB NewPoint)
 // Returns the lat/lon reached by travelling distance d (metres) from
@@ -13,7 +24,7 @@
 static std::pair<double,double> newPoint(double lat, double lon,
                                          double bearing, double d)
 {
-    constexpr double R = 6371000.0;
+    constexpr double R = EARTH_RADIUS_M;
     double newlat = asind(sind(lat) * std::cos(d / R)
                         + cosd(lat) * std::sin(d / R) * cosd(bearing));
     double A = sind(bearing) * std::sin(d / R) * cosd(lat);
@@ -29,7 +40,7 @@ static std::pair<double,double> newPoint(double lat, double lon,
 static double flightDistance(double lat1, double lon1,
                               double lat2, double lon2)
 {
-    return 2.0 * 6371000.0
+    return 2.0 * EARTH_RADIUS_M
          * std::asin(std::sqrt(
                std::pow(sind((lat2 - lat1) / 2.0), 2)
              + cosd(lat1) * cosd(lat2)
@@ -87,7 +98,7 @@ static void mercatorConvert(const std::vector<double>& lats,
                              std::vector<double>& x,
                              std::vector<double>& y)
 {
-    constexpr double R = 6371000.0;
+    constexpr double R = EARTH_RADIUS_M;
     int n = static_cast<int>(lats.size());
     x.resize(n); y.resize(n);
 
@@ -167,8 +178,8 @@ static double computeTurn(double x1, double y1, double b1,
     if (dist < 1e-12) return 0.0; // degenerate: coincident points
 
     // ---- Left-left turn (both points share the same left-turn circle) ----
-    if (std::abs(l2x - l1x) < 0.05 * dist
-     && std::abs(l2y - l1y) < 0.01 * dist)
+    if (std::abs(l2x - l1x) < TURN_CENTER_X_TOLERANCE * dist
+     && std::abs(l2y - l1y) < TURN_CENTER_Y_TOLERANCE * dist)
     {
         double a1 = angleFromCenter(x1, y1, l1x, l1y);
         double a2 = angleFromCenter(x2, y2, l2x, l2y);
@@ -178,8 +189,8 @@ static double computeTurn(double x1, double y1, double b1,
     }
 
     // ---- Right-right turn (both points share the same right-turn circle) ---
-    if (std::abs(r2x - r1x) < 0.01 * dist
-     && std::abs(r2y - r1y) < 0.01 * dist)
+    if (std::abs(r2x - r1x) < TURN_CENTER_X_TOLERANCE * dist
+     && std::abs(r2y - r1y) < TURN_CENTER_Y_TOLERANCE * dist)
     {
         double a1 = angleFromCenter(x1, y1, r1x, r1y);
         double a2 = angleFromCenter(x2, y2, r2x, r2y);
@@ -218,9 +229,8 @@ FlightPlanResult generateFlightPlan(const FlightPlanParams& p)
     // Standard formula: r = v² / (g·tan(phi)).
     // Note: the original MATLAB had "Cruise * 2" which appears to be a typo
     // for "Cruise^2"; the physically correct formula is used here.
-    double g = 9.8;
     res.turnRadius = (p.cruise * p.cruise)
-                   / (g * tand(p.bankAngle))
+                   / (GRAVITY_M_S2 * tand(p.bankAngle))
                    / p.rangeConversion;
 
     // ---- Accumulate flight-line distances and turn distances ----

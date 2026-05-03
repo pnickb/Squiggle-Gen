@@ -8,53 +8,21 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <cmath>
+#include <cstddef>
 
-// ---------------------------------------------------------------------------
-// Science target presets  (from MATLAB bgScienceTargets_SelectionChangeFcn)
-// ---------------------------------------------------------------------------
-struct SciPreset { const char* label; double lat; double lon; };
-static const SciPreset kSciPresets[] = {
-    { "Chamberlin Glacier",   76.743607,   -68.615041 },
-    { "Camp Century",         77.166696,   -61.133369 },
-    { "Jakobshavn",           69.215840,   -49.798696 },
-    { "Russell Glacier",      67.101912,   -50.225496 },
-    { "Columbia Glacier (AK)",61.170380,  -147.026099 },
-    { "Nuuk Glacier",         65.212518,   -50.662002 },
-};
+// Preset counts and Custom button IDs derived from the shared tables in
+// flightplanner.h so that adding or removing a preset only requires a change
+// in one place.
+static constexpr int kSciPresetCount = static_cast<int>(std::size(kScienceTargets));
+static constexpr int kSciCustomId    = kSciPresetCount;
 
-// ---------------------------------------------------------------------------
-// Airport presets  (from MATLAB bgAirports_SelectionChangeFcn)
-// ---------------------------------------------------------------------------
-struct APPreset { const char* label; double lat; double lon; };
-static const APPreset kAPPresets[] = {
-    { "Thule AB",         77.46666667,  -69.23055556 },
-    { "Ilulissat",        69.21666667,  -51.10000000 },
-    { "Kangerlussuaq",    67.00861111,  -50.68916667 },
-    { "Nuuk",             64.17500000,  -51.73888889 },
-    { "Valdez (AK)",      61.85000000, -146.34833333 },
-    { "Barrow (AK)",      71.29055556, -156.78861111 },
-};
+static constexpr int kAPPresetCount  = static_cast<int>(std::size(kAirports));
+static constexpr int kAPCustomId     = kAPPresetCount;
 
-// ---------------------------------------------------------------------------
-// Aircraft presets  (from MATLAB bgPlanes_SelectionChangeFcn)
-// ---------------------------------------------------------------------------
-struct AcPreset { const char* label; double cruise; double range; };
-static const AcPreset kAcPresets[] = {
-    { "Sierra",      30.8667,    1018600.0 },
-    { "P-3",        169.7670,   5556000.0 },
-    { "Twin Otter",  56.5889,   1574200.0 },
-};
+static constexpr int kAcPresetCount  = static_cast<int>(std::size(kAircraftPresets));
+static constexpr int kAcCustomId     = kAcPresetCount;
 
-// ---------------------------------------------------------------------------
-// Unit presets  (from MATLAB bgUnits_SelectionChangeFcn)
-// ---------------------------------------------------------------------------
-struct UnitPreset { const char* label; double speedConv; double rangeConv; };
-static const UnitPreset kUnitPresets[] = {
-    { "Metres / m/s",  1.0,       1.0    },
-    { "Miles / mph",   0.44704,   1609.34},
-    { "Knots / nm",    0.514444,  1852.0 },
-    { "km / km/h",     0.277778,  1000.0 },
-};
+static constexpr int kUnitPresetCount = static_cast<int>(std::size(kUnitConversions));
 
 // ===========================================================================
 MainWindow::MainWindow(QWidget* parent)
@@ -125,13 +93,13 @@ QGroupBox* MainWindow::buildScienceTargetGroup()
     auto* layout = new QVBoxLayout(gb);
     m_bgSciTarget = new QButtonGroup(this);
 
-    for (int i = 0; i < 6; ++i) {
-        auto* rb = new QRadioButton(kSciPresets[i].label, gb);
+    for (int i = 0; i < kSciPresetCount; ++i) {
+        auto* rb = new QRadioButton(kScienceTargets[i].name, gb);
         m_bgSciTarget->addButton(rb, i);
         layout->addWidget(rb);
     }
     auto* rbCustom = new QRadioButton("Custom", gb);
-    m_bgSciTarget->addButton(rbCustom, 6);
+    m_bgSciTarget->addButton(rbCustom, kSciCustomId);
     layout->addWidget(rbCustom);
 
     // Custom lat/lon inputs (shown always; only used when Custom is selected)
@@ -155,13 +123,13 @@ QGroupBox* MainWindow::buildAirportGroup()
     auto* layout = new QVBoxLayout(gb);
     m_bgAirport = new QButtonGroup(this);
 
-    for (int i = 0; i < 6; ++i) {
-        auto* rb = new QRadioButton(kAPPresets[i].label, gb);
+    for (int i = 0; i < kAPPresetCount; ++i) {
+        auto* rb = new QRadioButton(kAirports[i].name, gb);
         m_bgAirport->addButton(rb, i);
         layout->addWidget(rb);
     }
     auto* rbCustom = new QRadioButton("Custom", gb);
-    m_bgAirport->addButton(rbCustom, 6);
+    m_bgAirport->addButton(rbCustom, kAPCustomId);
     layout->addWidget(rbCustom);
 
     auto* row = new QHBoxLayout;
@@ -183,13 +151,13 @@ QGroupBox* MainWindow::buildAircraftGroup()
     auto* layout = new QVBoxLayout(gb);
     m_bgAircraft = new QButtonGroup(this);
 
-    for (int i = 0; i < 3; ++i) {
-        auto* rb = new QRadioButton(kAcPresets[i].label, gb);
+    for (int i = 0; i < kAcPresetCount; ++i) {
+        auto* rb = new QRadioButton(kAircraftPresets[i].name, gb);
         m_bgAircraft->addButton(rb, i);
         layout->addWidget(rb);
     }
     auto* rbCustom = new QRadioButton("Custom", gb);
-    m_bgAircraft->addButton(rbCustom, 3);
+    m_bgAircraft->addButton(rbCustom, kAcCustomId);
     layout->addWidget(rbCustom);
 
     // Custom cruise / range (in user units – interpreted after unit selection)
@@ -213,8 +181,8 @@ QGroupBox* MainWindow::buildUnitsGroup()
     auto* layout = new QVBoxLayout(gb);
     m_bgUnits = new QButtonGroup(this);
 
-    for (int i = 0; i < 4; ++i) {
-        auto* rb = new QRadioButton(kUnitPresets[i].label, gb);
+    for (int i = 0; i < kUnitPresetCount; ++i) {
+        auto* rb = new QRadioButton(kUnitConversions[i].name, gb);
         m_bgUnits->addButton(rb, i);
         layout->addWidget(rb);
     }
@@ -270,9 +238,9 @@ std::optional<FlightPlanParams> MainWindow::collectParams()
     int sciId = m_bgSciTarget->checkedId();
     if (sciId < 0) {
         errors << "No science target selected.";
-    } else if (sciId < 6) {
-        p.sciTarLat  = kSciPresets[sciId].lat;
-        p.sciTarLong = kSciPresets[sciId].lon;
+    } else if (sciId < kSciCustomId) {
+        p.sciTarLat  = kScienceTargets[sciId].lat;
+        p.sciTarLong = kScienceTargets[sciId].lon;
     } else {
         bool ok1, ok2;
         p.sciTarLat  = m_custTLat->text().toDouble(&ok1);
@@ -285,9 +253,9 @@ std::optional<FlightPlanParams> MainWindow::collectParams()
     int apId = m_bgAirport->checkedId();
     if (apId < 0) {
         errors << "No airport selected.";
-    } else if (apId < 6) {
-        p.apLat  = kAPPresets[apId].lat;
-        p.apLong = kAPPresets[apId].lon;
+    } else if (apId < kAPCustomId) {
+        p.apLat  = kAirports[apId].lat;
+        p.apLong = kAirports[apId].lon;
     } else {
         bool ok1, ok2;
         p.apLat  = m_custAPLat->text().toDouble(&ok1);
@@ -301,17 +269,17 @@ std::optional<FlightPlanParams> MainWindow::collectParams()
     if (unitId < 0) {
         errors << "No unit system selected.";
     } else {
-        p.speedConversion = kUnitPresets[unitId].speedConv;
-        p.rangeConversion = kUnitPresets[unitId].rangeConv;
+        p.speedConversion = kUnitConversions[unitId].speedConv;
+        p.rangeConversion = kUnitConversions[unitId].rangeConv;
     }
 
     // ---- Aircraft ----
     int acId = m_bgAircraft->checkedId();
     if (acId < 0) {
         errors << "No aircraft selected.";
-    } else if (acId < 3) {
-        p.cruise = kAcPresets[acId].cruise;
-        p.range  = kAcPresets[acId].range;
+    } else if (acId < kAcCustomId) {
+        p.cruise = kAircraftPresets[acId].cruise;
+        p.range  = kAircraftPresets[acId].range;
     } else {
         bool ok1, ok2;
         double custCruise = m_custCruise->text().toDouble(&ok1);

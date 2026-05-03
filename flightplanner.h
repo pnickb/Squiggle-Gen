@@ -30,6 +30,10 @@ struct AircraftPreset {
     double range;  // m
 };
 
+// ---------------------------------------------------------------------------
+// Preset tables (shared between the planner and the GUI)
+// ---------------------------------------------------------------------------
+
 struct ScienceTarget {
     const char* name;
     double lat;
@@ -46,6 +50,41 @@ struct UnitConversion {
     const char* name;
     double speedConv; // user speed unit -> m/s
     double rangeConv; // user range unit -> m
+};
+
+// Science target presets (from MATLAB bgScienceTargets_SelectionChangeFcn)
+inline const ScienceTarget kScienceTargets[] = {
+    { "Chamberlin Glacier",    76.743607,   -68.615041 },
+    { "Camp Century",          77.166696,   -61.133369 },
+    { "Jakobshavn",            69.215840,   -49.798696 },
+    { "Russell Glacier",       67.101912,   -50.225496 },
+    { "Columbia Glacier (AK)", 61.170380,  -147.026099 },
+    { "Nuuk Glacier",          65.212518,   -50.662002 },
+};
+
+// Airport presets (from MATLAB bgAirports_SelectionChangeFcn)
+inline const Airport kAirports[] = {
+    { "Thule AB",         77.46666667,  -69.23055556 },
+    { "Ilulissat",        69.21666667,  -51.10000000 },
+    { "Kangerlussuaq",    67.00861111,  -50.68916667 },
+    { "Nuuk",             64.17500000,  -51.73888889 },
+    { "Valdez (AK)",      61.85000000, -146.34833333 },
+    { "Barrow (AK)",      71.29055556, -156.78861111 },
+};
+
+// Aircraft presets (from MATLAB bgPlanes_SelectionChangeFcn)
+inline const AircraftPreset kAircraftPresets[] = {
+    { "Sierra",      30.8667,   1018600.0 },
+    { "P-3",        169.7670,  5556000.0  },
+    { "Twin Otter",  56.5889,  1574200.0  },
+};
+
+// Unit presets (from MATLAB bgUnits_SelectionChangeFcn)
+inline const UnitConversion kUnitConversions[] = {
+    { "Metres / m/s",  1.0,       1.0     },
+    { "Miles / mph",   0.44704,   1609.34 },
+    { "Knots / nm",    0.514444,  1852.0  },
+    { "km / km/h",     0.277778,  1000.0  },
 };
 
 // ---------------------------------------------------------------------------
